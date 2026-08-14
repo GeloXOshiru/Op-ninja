@@ -1,7 +1,7 @@
 -- =============================================
 --   JELO WARFREAK — PREMIUM UTILITY SUITE
 --   Anti-AFK • Infinite Jump • No-Clip
---   PLAYER ESP — See Everyone Through Walls (RED)
+--   PLAYER ESP • SPEED CONTROL (1–300)
 --   Foldable Panel • World-Class Design
 -- =============================================
 
@@ -24,16 +24,18 @@ local STATE = {
         AntiAFK = false,
         InfiniteJump = false,
         NoClip = false,
-        ESP = false
+        ESP = false,
+        Speed = false
     },
     Connections = {
         InfiniteJump = nil,
         NoClip = nil,
         ESP = nil
     },
-    Cache = {OriginalCanCollide = {}, OriginalMaterials = {}},
+    Cache = {OriginalCanCollide = {}, OriginalMaterials = {}, OriginalSpeed = 16},
     Uptime = 0,
-    Folded = false
+    Folded = false,
+    SpeedValue = 16 -- Default na bilis
 }
 
 -- =============================================
@@ -98,7 +100,7 @@ local function UpdateNoClip()
 end
 
 -- =============================================
--- PLAYER ESP — SEE THROUGH WALLS (RED COLOR)
+-- PLAYER ESP — SEE THROUGH WALLS (RED)
 -- =============================================
 local function RestorePlayerAppearance(player)
     local char = player.Character
@@ -154,6 +156,28 @@ local function UpdateESP()
 end
 
 -- =============================================
+-- SPEED CONTROL — 1 HANGGANG 300
+-- =============================================
+local function UpdateSpeed()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if STATE.Toggles.Speed then
+            char.Humanoid.WalkSpeed = STATE.SpeedValue
+        else
+            char.Humanoid.WalkSpeed = STATE.Cache.OriginalSpeed
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if STATE.Toggles.Speed then
+            UpdateSpeed()
+        end
+    end
+end)
+
+-- =============================================
 -- UI — FOLDABLE PANEL
 -- =============================================
 local Gui = Instance.new("ScreenGui")
@@ -164,7 +188,7 @@ Gui.ResetOnSpawn = false
 local Main = Instance.new("Frame")
 Main.BackgroundColor3 = Color3.fromRGB(8,8,15)
 Main.Position = UDim2.new(0.02,0,0.02,0)
-Main.Size = UDim2.new(0,240,0,260)
+Main.Size = UDim2.new(0,240,0,300)
 Main.Active = true; Main.Draggable = true
 Main.Parent = Gui
 
@@ -207,7 +231,7 @@ FoldBtn.Parent=TitleBar
 local Content = Instance.new("Frame")
 Content.BackgroundTransparency=1
 Content.Position=UDim2.new(0,0,0,48)
-Content.Size=UDim2.new(1,0,0,212)
+Content.Size=UDim2.new(1,0,0,252)
 Content.Parent=Main
 
 local Timer = Instance.new("TextLabel")
@@ -260,7 +284,6 @@ MakeButton("NO-CLIP",126,function(btn)
     UpdateNoClip()
 end)
 
--- NEW BUTTON: PLAYER ESP
 MakeButton("PLAYER ESP",166,function(btn)
     STATE.Toggles.ESP=not STATE.Toggles.ESP
     if STATE.Toggles.ESP then btn.Text="PLAYER ESP — ACTIVE"; btn.BackgroundColor3=Color3.fromRGB(180,20,20)
@@ -268,8 +291,61 @@ MakeButton("PLAYER ESP",166,function(btn)
     UpdateESP()
 end)
 
+-- SPEED BUTTON + INPUT BOX
+local SpeedBtn = Instance.new("TextButton")
+SpeedBtn.BackgroundColor3=Color3.fromRGB(40,40,55)
+SpeedBtn.Position=UDim2.new(0,12,0,206)
+SpeedBtn.Size=UDim2.new(1,-24,0,34)
+SpeedBtn.Font=Enum.Font.Gotham
+SpeedBtn.Text="SPEED — OFFLINE [16]"
+SpeedBtn.TextColor3=Color3.fromRGB(220,220,220)
+SpeedBtn.TextSize=12
+Instance.new("UICorner",SpeedBtn).CornerRadius=UDim.new(0,8)
+SpeedBtn.Parent=Content
+
+SpeedBtn.MouseButton1Click:Connect(function()
+    STATE.Toggles.Speed=not STATE.Toggles.Speed
+    if STATE.Toggles.Speed then
+        SpeedBtn.Text="SPEED — ACTIVE ["..STATE.SpeedValue.."]"
+        SpeedBtn.BackgroundColor3=Color3.fromRGB(15,130,60)
+        UpdateSpeed()
+        Notify("Speed","Set to "..STATE.SpeedValue,2)
+    else
+        SpeedBtn.Text="SPEED — OFFLINE ["..STATE.SpeedValue.."]"
+        SpeedBtn.BackgroundColor3=Color3.fromRGB(40,40,55)
+        UpdateSpeed()
+        Notify("Speed","Restored",2)
+    end
+end)
+
+-- SPEED INPUT — ILAGAY MO ANG BILIS (1–300)
+local SpeedBox = Instance.new("TextBox")
+SpeedBox.BackgroundColor3=Color3.fromRGB(30,30,45)
+SpeedBox.Position=UDim2.new(0,12,0,246)
+SpeedBox.Size=UDim2.new(1,-24,0,28)
+SpeedBox.Font=Enum.Font.Gotham
+SpeedBox.Text="16"
+SpeedBox.PlaceholderText="Ilagay ang bilis (1–300)"
+SpeedBox.TextColor3=Color3.fromRGB(255,255,255)
+SpeedBox.TextSize=11
+SpeedBox.ClearTextOnFocus=true
+Instance.new("UICorner",SpeedBox).CornerRadius=UDim.new(0,8)
+SpeedBox.Parent=Content
+
+SpeedBox.FocusLost:Connect(function(enterPressed)
+    local val = tonumber(SpeedBox.Text)
+    if val then
+        val = math.clamp(val, 1, 300) -- HINDI LALAMPAS SA 1–300
+        STATE.SpeedValue = val
+        SpeedBox.Text = tostring(val)
+        SpeedBtn.Text = STATE.Toggles.Speed and "SPEED — ACTIVE ["..val.."]" or "SPEED — OFFLINE ["..val.."]"
+        if STATE.Toggles.Speed then UpdateSpeed() end
+        Notify("Speed","Set: "..val,2)
+    end
+end)
+
 -- FOLD / UNFOLD
-local OriginalHeight = 260
+local OriginalHeight = 300
 local FoldedHeight = 48
 
 FoldBtn.MouseButton1Click:Connect(function()
@@ -285,5 +361,5 @@ FoldBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-print("✅ JELO WARFREAK — ALL SYSTEMS ONLINE")
-Notify("Jelo Warfreak","ESP Added — See players in RED!",4)
+print("✅ JELO WARFREAK — SPEED CONTROL ADDED (1–300)")
+Notify("Jelo Warfreak","Speed: 1–300 • Ilagay sa box!",4)
