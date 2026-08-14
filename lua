@@ -2,7 +2,7 @@
 --   JELO WARFREAK — UNIVERSAL UTILITY SUITE
 --   Works on ANY Roblox Game
 --   Anti-AFK • Infinite Jump • No-Clip
---   Player ESP • Speed Control (1–300)
+--   Player ESP • SPEED: 1 to 2000
 --   Foldable Panel • World-Class Design
 -- =============================================
 
@@ -207,7 +207,7 @@ local function UpdateESP()
 end
 
 -- =============================================
--- SPEED CONTROL — 1 TO 300 (UNIVERSAL)
+-- SPEED CONTROL — 1 TO 2000
 -- =============================================
 task.spawn(function()
     while task.wait(0.3) do
@@ -397,14 +397,14 @@ SpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Speed Input Box
+-- Speed Input Box — LIMIT: 1 to 2000
 local SpeedBox = Instance.new("TextBox")
 SpeedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 SpeedBox.Position = UDim2.new(0, 12, 0, 246)
 SpeedBox.Size = UDim2.new(1, -24, 0, 28)
 SpeedBox.Font = Enum.Font.Gotham
 SpeedBox.Text = "16"
-SpeedBox.PlaceholderText = "Speed: 1–300"
+SpeedBox.PlaceholderText = "Speed: 1–2000"
 SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedBox.TextSize = 11
 SpeedBox.ClearTextOnFocus = true
@@ -414,7 +414,7 @@ SpeedBox.Parent = Content
 SpeedBox.FocusLost:Connect(function(EnterPressed)
     local Val = tonumber(SpeedBox.Text)
     if Val then
-        Val = math.clamp(Val, 1, 300)
+        Val = math.clamp(Val, 1, 2000) -- ✅ HANGGANG 2000 NA!
         STATE.SpeedValue = Val
         SpeedBox.Text = tostring(Val)
         SpeedBtn.Text = STATE.Toggles.Speed and "SPEED — ACTIVE [" .. Val .. "]" or "SPEED — OFFLINE [" .. Val .. "]"
@@ -441,6 +441,6 @@ end)
 
 print("==========================================")
 print("  JELO WARFREAK — UNIVERSAL SUITE")
-print("  Works on ANY Roblox Game")
+print("  SPEED LIMIT: 1 to 2000 ✅")
 print("==========================================")
-Notify("Jelo Warfreak", "Universal Suite Loaded!", 4)
+Notify("Jelo Warfreak", "Speed: 1–2000 Ready!", 4)
