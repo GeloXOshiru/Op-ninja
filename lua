@@ -1,7 +1,8 @@
 -- =============================================
---   JELO WARFREAK — PREMIUM UTILITY SUITE
+--   JELO WARFREAK — UNIVERSAL UTILITY SUITE
+--   Works on ANY Roblox Game
 --   Anti-AFK • Infinite Jump • No-Clip
---   PLAYER ESP • SPEED CONTROL (1–300)
+--   Player ESP • Speed Control (1–300)
 --   Foldable Panel • World-Class Design
 -- =============================================
 
@@ -32,10 +33,14 @@ local STATE = {
         NoClip = nil,
         ESP = nil
     },
-    Cache = {OriginalCanCollide = {}, OriginalMaterials = {}, OriginalSpeed = 16},
+    Cache = {
+        OriginalCanCollide = {},
+        OriginalMaterials = {},
+        OriginalSpeed = 16
+    },
     Uptime = 0,
     Folded = false,
-    SpeedValue = 16 -- Default na bilis
+    SpeedValue = 16
 }
 
 -- =============================================
@@ -43,136 +48,177 @@ local STATE = {
 -- =============================================
 local function Notify(title, msg, dur)
     pcall(function()
-        Services.StarterGui:SetCore("SendNotification", {Title=title, Text=msg, Duration=dur or 3})
+        Services.StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = msg,
+            Duration = dur or 3
+        })
     end)
 end
 
 -- =============================================
--- ANTI-AFK
+-- ANTI-AFK — UNIVERSAL
 -- =============================================
 local AntiAFKConn = nil
 local function EnableAntiAFK()
     AntiAFKConn = LocalPlayer.Idled:Connect(function()
-        pcall(function() Services.VirtualUser:CaptureController() Services.VirtualUser:ClickButton2(Vector2.new()) end)
+        pcall(function()
+            Services.VirtualUser:CaptureController()
+            Services.VirtualUser:ClickButton2(Vector2.new())
+        end)
     end)
 end
-local function DisableAntiAFK() if AntiAFKConn then AntiAFKConn:Disconnect() AntiAFKConn=nil end end
-task.spawn(function() while task.wait(240) do if STATE.Toggles.AntiAFK then pcall(function() Services.VirtualUser:CaptureController() Services.VirtualUser:ClickButton2(Vector2.new()) end) end end end)
+local function DisableAntiAFK()
+    if AntiAFKConn then AntiAFKConn:Disconnect() AntiAFKConn = nil end
+end
+
+task.spawn(function()
+    while task.wait(240) do
+        if STATE.Toggles.AntiAFK then
+            pcall(function()
+                Services.VirtualUser:CaptureController()
+                Services.VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end
+end)
 
 -- =============================================
--- INFINITE JUMP
+-- INFINITE JUMP — UNIVERSAL
 -- =============================================
 local function UpdateInfiniteJump()
+    if STATE.Connections.InfiniteJump then
+        STATE.Connections.InfiniteJump:Disconnect()
+        STATE.Connections.InfiniteJump = nil
+    end
+
     if STATE.Toggles.InfiniteJump then
-        if STATE.Connections.InfiniteJump then STATE.Connections.InfiniteJump:Disconnect() end
         STATE.Connections.InfiniteJump = Services.UserInputService.JumpRequest:Connect(function()
-            if not STATE.Toggles.InfiniteJump then STATE.Connections.InfiniteJump:Disconnect(); return end
-            local c = LocalPlayer.Character
-            if c and c:FindFirstChild("Humanoid") then c.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
+            if not STATE.Toggles.InfiniteJump then return end
+            local Char = LocalPlayer.Character
+            if Char and Char:FindFirstChild("Humanoid") then
+                Char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
         end)
-        Notify("Infinite Jump","Enabled",3)
+        Notify("Infinite Jump", "Enabled", 3)
     else
-        if STATE.Connections.InfiniteJump then STATE.Connections.InfiniteJump:Disconnect() end
-        Notify("Infinite Jump","Disabled",3)
+        Notify("Infinite Jump", "Disabled", 3)
     end
 end
 
 -- =============================================
--- NO-CLIP
+-- NO-CLIP — UNIVERSAL
 -- =============================================
 local function UpdateNoClip()
+    if STATE.Connections.NoClip then
+        STATE.Connections.NoClip:Disconnect()
+        STATE.Connections.NoClip = nil
+    end
+    STATE.Cache.OriginalCanCollide = {}
+
     if STATE.Toggles.NoClip then
-        STATE.Cache.OriginalCanCollide = {}
-        if STATE.Connections.NoClip then STATE.Connections.NoClip:Disconnect() end
         STATE.Connections.NoClip = Services.RunService.Stepped:Connect(function()
-            if not STATE.Toggles.NoClip then STATE.Connections.NoClip:Disconnect(); return end
-            local c = LocalPlayer.Character
-            if c then for _,p in ipairs(c:GetChildren()) do if p:IsA("BasePart") then if STATE.Cache.OriginalCanCollide[p]==nil then STATE.Cache.OriginalCanCollide[p]=p.CanCollide end p.CanCollide=false end end end
+            if not STATE.Toggles.NoClip then return end
+            local Char = LocalPlayer.Character
+            if Char then
+                for _, Part in ipairs(Char:GetChildren()) do
+                    if Part:IsA("BasePart") then
+                        if STATE.Cache.OriginalCanCollide[Part] == nil then
+                            STATE.Cache.OriginalCanCollide[Part] = Part.CanCollide
+                        end
+                        Part.CanCollide = false
+                    end
+                end
+            end
         end)
-        Notify("No-Clip","Enabled",3)
+        Notify("No-Clip", "Enabled", 3)
     else
-        if STATE.Connections.NoClip then STATE.Connections.NoClip:Disconnect() end
-        local c=LocalPlayer.Character
-        if c then for _,p in ipairs(c:GetChildren()) do if p:IsA("BasePart") and STATE.Cache.OriginalCanCollide[p]~=nil then p.CanCollide=STATE.Cache.OriginalCanCollide[p] end end end
-        STATE.Cache.OriginalCanCollide={}
-        Notify("No-Clip","Disabled",3)
+        task.wait(0.1)
+        local Char = LocalPlayer.Character
+        if Char then
+            for _, Part in ipairs(Char:GetChildren()) do
+                if Part:IsA("BasePart") and STATE.Cache.OriginalCanCollide[Part] ~= nil then
+                    Part.CanCollide = STATE.Cache.OriginalCanCollide[Part]
+                end
+            end
+        end
+        STATE.Cache.OriginalCanCollide = {}
+        Notify("No-Clip", "Disabled", 3)
     end
 end
 
 -- =============================================
 -- PLAYER ESP — SEE THROUGH WALLS (RED)
 -- =============================================
-local function RestorePlayerAppearance(player)
-    local char = player.Character
-    if char then
-        for _, part in ipairs(char:GetChildren()) do
-            if part:IsA("BasePart") and STATE.Cache.OriginalMaterials[part] then
-                part.Material = STATE.Cache.OriginalMaterials[part].Material
-                part.BrickColor = STATE.Cache.OriginalMaterials[part].BrickColor
-                part.Transparency = STATE.Cache.OriginalMaterials[part].Transparency
+local function RestorePlayerAppearance(Player)
+    local Char = Player.Character
+    if Char then
+        for _, Part in ipairs(Char:GetChildren()) do
+            if Part:IsA("BasePart") and STATE.Cache.OriginalMaterials[Part] then
+                Part.Material = STATE.Cache.OriginalMaterials[Part].Material
+                Part.BrickColor = STATE.Cache.OriginalMaterials[Part].BrickColor
+                Part.Transparency = STATE.Cache.OriginalMaterials[Part].Transparency
             end
         end
     end
 end
 
 local function UpdateESP()
+    if STATE.Connections.ESP then
+        STATE.Connections.ESP:Disconnect()
+        STATE.Connections.ESP = nil
+    end
+    STATE.Cache.OriginalMaterials = {}
+
     if STATE.Toggles.ESP then
-        STATE.Cache.OriginalMaterials = {}
-        if STATE.Connections.ESP then STATE.Connections.ESP:Disconnect() end
         STATE.Connections.ESP = Services.RunService.RenderStepped:Connect(function()
-            if not STATE.Toggles.ESP then STATE.Connections.ESP:Disconnect(); return end
-            for _, player in ipairs(Services.Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character then
-                    local char = player.Character
-                    local humanoid = char:FindFirstChild("Humanoid")
-                    if humanoid and humanoid.Health > 0 then
-                        for _, part in ipairs(char:GetChildren()) do
-                            if part:IsA("BasePart") then
-                                if not STATE.Cache.OriginalMaterials[part] then
-                                    STATE.Cache.OriginalMaterials[part] = {
-                                        Material = part.Material,
-                                        BrickColor = part.BrickColor,
-                                        Transparency = part.Transparency
+            if not STATE.Toggles.ESP then return end
+            for _, Player in ipairs(Services.Players:GetPlayers()) do
+                if Player ~= LocalPlayer and Player.Character then
+                    local Char = Player.Character
+                    local Humanoid = Char:FindFirstChild("Humanoid")
+                    if Humanoid and Humanoid.Health > 0 then
+                        for _, Part in ipairs(Char:GetChildren()) do
+                            if Part:IsA("BasePart") then
+                                if not STATE.Cache.OriginalMaterials[Part] then
+                                    STATE.Cache.OriginalMaterials[Part] = {
+                                        Material = Part.Material,
+                                        BrickColor = Part.BrickColor,
+                                        Transparency = Part.Transparency
                                     }
                                 end
-                                part.Material = Enum.Material.Neon
-                                part.BrickColor = BrickColor.new("Really red")
-                                part.Transparency = 0
+                                Part.Material = Enum.Material.Neon
+                                Part.BrickColor = BrickColor.new("Really red")
+                                Part.Transparency = 0
                             end
                         end
                     end
                 end
             end
         end)
-        Notify("Player ESP","See everyone in RED!",3)
+        Notify("Player ESP", "See everyone in RED!", 3)
     else
-        if STATE.Connections.ESP then STATE.Connections.ESP:Disconnect() end
-        for _, player in ipairs(Services.Players:GetPlayers()) do
-            task.spawn(function() RestorePlayerAppearance(player) end)
+        for _, Player in ipairs(Services.Players:GetPlayers()) do
+            task.spawn(function() RestorePlayerAppearance(Player) end)
         end
         STATE.Cache.OriginalMaterials = {}
-        Notify("Player ESP","Disabled",3)
+        Notify("Player ESP", "Disabled", 3)
     end
 end
 
 -- =============================================
--- SPEED CONTROL — 1 HANGGANG 300
+-- SPEED CONTROL — 1 TO 300 (UNIVERSAL)
 -- =============================================
-local function UpdateSpeed()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("Humanoid") then
-        if STATE.Toggles.Speed then
-            char.Humanoid.WalkSpeed = STATE.SpeedValue
-        else
-            char.Humanoid.WalkSpeed = STATE.Cache.OriginalSpeed
-        end
-    end
-end
-
 task.spawn(function()
-    while task.wait(0.5) do
-        if STATE.Toggles.Speed then
-            UpdateSpeed()
+    while task.wait(0.3) do
+        local Char = LocalPlayer.Character
+        if Char and Char:FindFirstChild("Humanoid") then
+            STATE.Cache.OriginalSpeed = STATE.Cache.OriginalSpeed or Char.Humanoid.WalkSpeed
+            if STATE.Toggles.Speed then
+                Char.Humanoid.WalkSpeed = STATE.SpeedValue
+            else
+                Char.Humanoid.WalkSpeed = STATE.Cache.OriginalSpeed
+            end
         end
     end
 end)
@@ -186,180 +232,215 @@ Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 Gui.ResetOnSpawn = false
 
 local Main = Instance.new("Frame")
-Main.BackgroundColor3 = Color3.fromRGB(8,8,15)
-Main.Position = UDim2.new(0.02,0,0.02,0)
-Main.Size = UDim2.new(0,240,0,300)
-Main.Active = true; Main.Draggable = true
+Main.BackgroundColor3 = Color3.fromRGB(8, 8, 15)
+Main.Position = UDim2.new(0.02, 0, 0.02, 0)
+Main.Size = UDim2.new(0, 240, 0, 300)
+Main.Active = true
+Main.Draggable = true
 Main.Parent = Gui
 
 -- Style
-Instance.new("UICorner",Main).CornerRadius=UDim.new(0,16)
-local Stroke=Instance.new("UIStroke",Main)
-Stroke.Thickness=2.5; Stroke.Color=Color3.fromRGB(0,255,140); Stroke.Transparency=0.08
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Thickness = 2.5
+Stroke.Color = Color3.fromRGB(0, 255, 140)
+Stroke.Transparency = 0.08
 
--- TITLE BAR
+-- Title Bar
 local TitleBar = Instance.new("Frame")
-TitleBar.BackgroundTransparency=1
-TitleBar.Position=UDim2.new(0,0,0,0)
-TitleBar.Size=UDim2.new(1,0,0,48)
-TitleBar.Parent=Main
+TitleBar.BackgroundTransparency = 1
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.Size = UDim2.new(1, 0, 0, 48)
+TitleBar.Parent = Main
 
 local Title = Instance.new("TextLabel")
-Title.BackgroundTransparency=1
-Title.Position=UDim2.new(0,12,0,8)
-Title.Size=UDim2.new(1,-50,0,32)
-Title.Font=Enum.Font.GothamBold
-Title.Text="JELO WARFREAK"
-Title.TextColor3=Color3.fromRGB(0,255,140)
-Title.TextSize=16
-Title.TextXAlignment=Enum.TextXAlignment.Left
-Title.Parent=TitleBar
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 12, 0, 8)
+Title.Size = UDim2.new(1, -50, 0, 32)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "JELO WARFREAK"
+Title.TextColor3 = Color3.fromRGB(0, 255, 140)
+Title.TextSize = 16
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
 
--- FOLD BUTTON
+-- Fold Button
 local FoldBtn = Instance.new("TextButton")
-FoldBtn.BackgroundColor3=Color3.fromRGB(30,30,45)
-FoldBtn.Position=UDim2.new(1,-40,0,8)
-FoldBtn.Size=UDim2.new(0,28,0,28)
-FoldBtn.Font=Enum.Font.GothamBold
-FoldBtn.Text="−"
-FoldBtn.TextColor3=Color3.fromRGB(200,200,200)
-FoldBtn.TextSize=14
-Instance.new("UICorner",FoldBtn).CornerRadius=UDim.new(0,8)
-FoldBtn.Parent=TitleBar
+FoldBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+FoldBtn.Position = UDim2.new(1, -40, 0, 8)
+FoldBtn.Size = UDim2.new(0, 28, 0, 28)
+FoldBtn.Font = Enum.Font.GothamBold
+FoldBtn.Text = "−"
+FoldBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+FoldBtn.TextSize = 14
+Instance.new("UICorner", FoldBtn).CornerRadius = UDim.new(0, 8)
+FoldBtn.Parent = TitleBar
 
--- CONTENT AREA
+-- Content Area
 local Content = Instance.new("Frame")
-Content.BackgroundTransparency=1
-Content.Position=UDim2.new(0,0,0,48)
-Content.Size=UDim2.new(1,0,0,252)
-Content.Parent=Main
+Content.BackgroundTransparency = 1
+Content.Position = UDim2.new(0, 0, 0, 48)
+Content.Size = UDim2.new(1, 0, 0, 252)
+Content.Parent = Main
 
+-- Timer
 local Timer = Instance.new("TextLabel")
-Timer.BackgroundTransparency=1
-Timer.Position=UDim2.new(0,0,0,4)
-Timer.Size=UDim2.new(1,0,0,32)
-Timer.Font=Enum.Font.GothamBold
-Timer.Text="00:00:00"
-Timer.TextColor3=Color3.fromRGB(255,255,255)
-Timer.TextSize=22
-Timer.Parent=Content
+Timer.BackgroundTransparency = 1
+Timer.Position = UDim2.new(0, 0, 0, 4)
+Timer.Size = UDim2.new(1, 0, 0, 32)
+Timer.Font = Enum.Font.GothamBold
+Timer.Text = "00:00:00"
+Timer.TextColor3 = Color3.fromRGB(255, 255, 255)
+Timer.TextSize = 22
+Timer.Parent = Content
 
--- Timer Loop
-task.spawn(function() while task.wait(1) do STATE.Uptime+=1 local h=math.floor(STATE.Uptime/3600) local m=math.floor((STATE.Uptime%3600)/60) local s=STATE.Uptime%60 Timer.Text=string.format("%02d:%02d:%02d",h,m,s) end end)
-
--- BUTTON TEMPLATE
-local function MakeButton(name,posY,callback)
-    local btn=Instance.new("TextButton")
-    btn.BackgroundColor3=Color3.fromRGB(40,40,55)
-    btn.Position=UDim2.new(0,12,0,posY)
-    btn.Size=UDim2.new(1,-24,0,34)
-    btn.Font=Enum.Font.Gotham
-    btn.Text=name.." — OFFLINE"
-    btn.TextColor3=Color3.fromRGB(220,220,220)
-    btn.TextSize=12
-    Instance.new("UICorner",btn).CornerRadius=UDim.new(0,8)
-    btn.Parent=Content
-    btn.MouseButton1Click:Connect(function() callback(btn) end)
-    return btn
-end
-
--- CREATE BUTTONS
-MakeButton("ANTI-AFK",46,function(btn)
-    STATE.Toggles.AntiAFK=not STATE.Toggles.AntiAFK
-    if STATE.Toggles.AntiAFK then btn.Text="ANTI-AFK — ACTIVE"; btn.BackgroundColor3=Color3.fromRGB(15,130,60); EnableAntiAFK(); Notify("Anti-AFK","Enabled",2)
-    else btn.Text="ANTI-AFK — OFFLINE"; btn.BackgroundColor3=Color3.fromRGB(40,40,55); DisableAntiAFK(); Notify("Anti-AFK","Disabled",2) end
+task.spawn(function()
+    while task.wait(1) do
+        STATE.Uptime += 1
+        local H = math.floor(STATE.Uptime / 3600)
+        local M = math.floor((STATE.Uptime % 3600) / 60)
+        local S = STATE.Uptime % 60
+        Timer.Text = string.format("%02d:%02d:%02d", H, M, S)
+    end
 end)
 
-MakeButton("INFINITE JUMP",86,function(btn)
-    STATE.Toggles.InfiniteJump=not STATE.Toggles.InfiniteJump
-    if STATE.Toggles.InfiniteJump then btn.Text="INFINITE JUMP — ACTIVE"; btn.BackgroundColor3=Color3.fromRGB(15,130,60)
-    else btn.Text="INFINITE JUMP — OFFLINE"; btn.BackgroundColor3=Color3.fromRGB(40,40,55) end
+-- Button Template
+local function MakeButton(Name, PosY, Callback)
+    local Btn = Instance.new("TextButton")
+    Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    Btn.Position = UDim2.new(0, 12, 0, PosY)
+    Btn.Size = UDim2.new(1, -24, 0, 34)
+    Btn.Font = Enum.Font.Gotham
+    Btn.Text = Name .. " — OFFLINE"
+    Btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Btn.TextSize = 12
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
+    Btn.Parent = Content
+    Btn.MouseButton1Click:Connect(function() Callback(Btn) end)
+    return Btn
+end
+
+-- Buttons
+MakeButton("ANTI-AFK", 46, function(Btn)
+    STATE.Toggles.AntiAFK = not STATE.Toggles.AntiAFK
+    if STATE.Toggles.AntiAFK then
+        Btn.Text = "ANTI-AFK — ACTIVE"
+        Btn.BackgroundColor3 = Color3.fromRGB(15, 130, 60)
+        EnableAntiAFK()
+        Notify("Anti-AFK", "Enabled", 2)
+    else
+        Btn.Text = "ANTI-AFK — OFFLINE"
+        Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        DisableAntiAFK()
+        Notify("Anti-AFK", "Disabled", 2)
+    end
+end)
+
+MakeButton("INFINITE JUMP", 86, function(Btn)
+    STATE.Toggles.InfiniteJump = not STATE.Toggles.InfiniteJump
+    if STATE.Toggles.InfiniteJump then
+        Btn.Text = "INFINITE JUMP — ACTIVE"
+        Btn.BackgroundColor3 = Color3.fromRGB(15, 130, 60)
+    else
+        Btn.Text = "INFINITE JUMP — OFFLINE"
+        Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    end
     UpdateInfiniteJump()
 end)
 
-MakeButton("NO-CLIP",126,function(btn)
-    STATE.Toggles.NoClip=not STATE.Toggles.NoClip
-    if STATE.Toggles.NoClip then btn.Text="NO-CLIP — ACTIVE"; btn.BackgroundColor3=Color3.fromRGB(15,130,60)
-    else btn.Text="NO-CLIP — OFFLINE"; btn.BackgroundColor3=Color3.fromRGB(40,40,55) end
+MakeButton("NO-CLIP", 126, function(Btn)
+    STATE.Toggles.NoClip = not STATE.Toggles.NoClip
+    if STATE.Toggles.NoClip then
+        Btn.Text = "NO-CLIP — ACTIVE"
+        Btn.BackgroundColor3 = Color3.fromRGB(15, 130, 60)
+    else
+        Btn.Text = "NO-CLIP — OFFLINE"
+        Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    end
     UpdateNoClip()
 end)
 
-MakeButton("PLAYER ESP",166,function(btn)
-    STATE.Toggles.ESP=not STATE.Toggles.ESP
-    if STATE.Toggles.ESP then btn.Text="PLAYER ESP — ACTIVE"; btn.BackgroundColor3=Color3.fromRGB(180,20,20)
-    else btn.Text="PLAYER ESP — OFFLINE"; btn.BackgroundColor3=Color3.fromRGB(40,40,55) end
+MakeButton("PLAYER ESP", 166, function(Btn)
+    STATE.Toggles.ESP = not STATE.Toggles.ESP
+    if STATE.Toggles.ESP then
+        Btn.Text = "PLAYER ESP — ACTIVE"
+        Btn.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
+    else
+        Btn.Text = "PLAYER ESP — OFFLINE"
+        Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    end
     UpdateESP()
 end)
 
--- SPEED BUTTON + INPUT BOX
+-- Speed Button
 local SpeedBtn = Instance.new("TextButton")
-SpeedBtn.BackgroundColor3=Color3.fromRGB(40,40,55)
-SpeedBtn.Position=UDim2.new(0,12,0,206)
-SpeedBtn.Size=UDim2.new(1,-24,0,34)
-SpeedBtn.Font=Enum.Font.Gotham
-SpeedBtn.Text="SPEED — OFFLINE [16]"
-SpeedBtn.TextColor3=Color3.fromRGB(220,220,220)
-SpeedBtn.TextSize=12
-Instance.new("UICorner",SpeedBtn).CornerRadius=UDim.new(0,8)
-SpeedBtn.Parent=Content
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+SpeedBtn.Position = UDim2.new(0, 12, 0, 206)
+SpeedBtn.Size = UDim2.new(1, -24, 0, 34)
+SpeedBtn.Font = Enum.Font.Gotham
+SpeedBtn.Text = "SPEED — OFFLINE [16]"
+SpeedBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+SpeedBtn.TextSize = 12
+Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 8)
+SpeedBtn.Parent = Content
 
 SpeedBtn.MouseButton1Click:Connect(function()
-    STATE.Toggles.Speed=not STATE.Toggles.Speed
+    STATE.Toggles.Speed = not STATE.Toggles.Speed
     if STATE.Toggles.Speed then
-        SpeedBtn.Text="SPEED — ACTIVE ["..STATE.SpeedValue.."]"
-        SpeedBtn.BackgroundColor3=Color3.fromRGB(15,130,60)
-        UpdateSpeed()
-        Notify("Speed","Set to "..STATE.SpeedValue,2)
+        SpeedBtn.Text = "SPEED — ACTIVE [" .. STATE.SpeedValue .. "]"
+        SpeedBtn.BackgroundColor3 = Color3.fromRGB(15, 130, 60)
+        Notify("Speed", "Set to " .. STATE.SpeedValue, 2)
     else
-        SpeedBtn.Text="SPEED — OFFLINE ["..STATE.SpeedValue.."]"
-        SpeedBtn.BackgroundColor3=Color3.fromRGB(40,40,55)
-        UpdateSpeed()
-        Notify("Speed","Restored",2)
+        SpeedBtn.Text = "SPEED — OFFLINE [" .. STATE.SpeedValue .. "]"
+        SpeedBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        Notify("Speed", "Restored", 2)
     end
 end)
 
--- SPEED INPUT — ILAGAY MO ANG BILIS (1–300)
+-- Speed Input Box
 local SpeedBox = Instance.new("TextBox")
-SpeedBox.BackgroundColor3=Color3.fromRGB(30,30,45)
-SpeedBox.Position=UDim2.new(0,12,0,246)
-SpeedBox.Size=UDim2.new(1,-24,0,28)
-SpeedBox.Font=Enum.Font.Gotham
-SpeedBox.Text="16"
-SpeedBox.PlaceholderText="Ilagay ang bilis (1–300)"
-SpeedBox.TextColor3=Color3.fromRGB(255,255,255)
-SpeedBox.TextSize=11
-SpeedBox.ClearTextOnFocus=true
-Instance.new("UICorner",SpeedBox).CornerRadius=UDim.new(0,8)
-SpeedBox.Parent=Content
+SpeedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+SpeedBox.Position = UDim2.new(0, 12, 0, 246)
+SpeedBox.Size = UDim2.new(1, -24, 0, 28)
+SpeedBox.Font = Enum.Font.Gotham
+SpeedBox.Text = "16"
+SpeedBox.PlaceholderText = "Speed: 1–300"
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.TextSize = 11
+SpeedBox.ClearTextOnFocus = true
+Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 8)
+SpeedBox.Parent = Content
 
-SpeedBox.FocusLost:Connect(function(enterPressed)
-    local val = tonumber(SpeedBox.Text)
-    if val then
-        val = math.clamp(val, 1, 300) -- HINDI LALAMPAS SA 1–300
-        STATE.SpeedValue = val
-        SpeedBox.Text = tostring(val)
-        SpeedBtn.Text = STATE.Toggles.Speed and "SPEED — ACTIVE ["..val.."]" or "SPEED — OFFLINE ["..val.."]"
-        if STATE.Toggles.Speed then UpdateSpeed() end
-        Notify("Speed","Set: "..val,2)
+SpeedBox.FocusLost:Connect(function(EnterPressed)
+    local Val = tonumber(SpeedBox.Text)
+    if Val then
+        Val = math.clamp(Val, 1, 300)
+        STATE.SpeedValue = Val
+        SpeedBox.Text = tostring(Val)
+        SpeedBtn.Text = STATE.Toggles.Speed and "SPEED — ACTIVE [" .. Val .. "]" or "SPEED — OFFLINE [" .. Val .. "]"
+        Notify("Speed", "Set: " .. Val, 2)
     end
 end)
 
--- FOLD / UNFOLD
+-- Fold / Unfold
 local OriginalHeight = 300
 local FoldedHeight = 48
 
 FoldBtn.MouseButton1Click:Connect(function()
     STATE.Folded = not STATE.Folded
     if STATE.Folded then
-        Main.Size = UDim2.new(0,240,0,FoldedHeight)
+        Main.Size = UDim2.new(0, 240, 0, FoldedHeight)
         Content.Visible = false
         FoldBtn.Text = "+"
     else
-        Main.Size = UDim2.new(0,240,0,OriginalHeight)
+        Main.Size = UDim2.new(0, 240, 0, OriginalHeight)
         Content.Visible = true
         FoldBtn.Text = "−"
     end
 end)
 
-print("✅ JELO WARFREAK — SPEED CONTROL ADDED (1–300)")
-Notify("Jelo Warfreak","Speed: 1–300 • Ilagay sa box!",4)
+print("==========================================")
+print("  JELO WARFREAK — UNIVERSAL SUITE")
+print("  Works on ANY Roblox Game")
+print("==========================================")
+Notify("Jelo Warfreak", "Universal Suite Loaded!", 4)
